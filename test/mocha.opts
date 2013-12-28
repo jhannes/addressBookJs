@@ -1,0 +1,4 @@
+--watch
+--growl
+--reporter dot
+test/server

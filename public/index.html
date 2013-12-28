@@ -1,0 +1,74 @@
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="lib/jquery2.js"></script>
+	<script type="text/javascript" src="lib/underscore.js"></script>
+	<script type="text/javascript" src="script/contactsController.js"></script>
+
+	<script type="text/javascript">
+	$(function() {
+		$(document).ajaxError(function( event, request, settings, exception ) {
+  			console.log("Error requesting page " + settings.url );
+  			console.log(exception);
+		});
+
+		var controller = contactsController();
+
+		var loadContacts = function() {
+			$.getJSON("/api/contacts", function(data) {
+				controller.display(data, $("#contacts"));
+			});
+		};
+
+		$("#addContact").submit(function(e) {
+			e.preventDefault();
+			var contact = controller.parse($("#addContact"));
+			console.log(contact);
+			$.ajax("/api/contacts", {
+			  type: "POST",
+			  data: JSON.stringify(contact),
+			  success: function() {
+			  	loadContacts();
+			  	$('#addContact')[0].reset();
+		  	  },
+			  contentType: "application/json"
+			});
+		});
+
+		loadContacts();
+	});
+	</script>
+
+	<style type="text/css">
+		form ul { padding: 0; margin: 0;}
+		form li { display: inline-block; }
+		form li label { font-weight: bold; display: block; }
+	</style>
+</head>
+<body>
+	<section>
+		<form id="addContact">
+			<ul>
+				<li>
+					<label for="firstName">First name:</label>
+					<input type="text" name="firstName" id="firstName" />
+				</li>
+				<li>
+					<label for="lastName">Last name:</label>
+					<input type="text" name="lastName" id="lastName" />
+				</li>
+				<li>
+					<input type="submit" value="Add contact" />
+				</li>
+			</ul>
+		</form>
+	</section>
+
+
+	<table id="contacts">
+
+	</table>
+
+
+</body>
+</html>
