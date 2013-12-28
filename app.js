@@ -1,34 +1,61 @@
 var express = require("express");
-var MongoClient = require('mongodb').MongoClient;
+var Sequelize = require('sequelize');
+var _ = require("underscore");
 
-exports.start = function(dbName, callback) {
-    MongoClient.connect(dbName, function(err, db) {
-	    var contacts = db.collection('contacts3');
+var createContactsController = function(app, path, table) {
+	app.delete(path, function(req, res) {
+	    table.findAll().complete(function(err, results) {
+	    	if (err) { console.log(err); res.send(500); return; }
+	    	res.send(results);
+
+	    	_.each(results,function(row) {
+	    		row.destroy().complete(function(err) {
+			    	if (err) { console.log(err); res.send(500); return; }
+	    		});
+	    	});
+	    });
+	});
+
+	app.get(path, function(req, res) {
+	    table.findAll().complete(function(err, results) {
+	    	if (err) { console.log(err); res.send(500); return; }
+	    	res.send(results);
+	    });
+	});
+
+	app.post(path, function(req,res) {
+		var contact = req.body;
+		var row = table.build({firstName: contact.firstName, lastName: contact.lastName });
+
+	    row.save().complete(function(err) {
+	    	if (err) { console.log(err); res.send(500); return; }
+			res.send(201);
+	    });
+	});
+};
+
+exports.start = function(connection, callback) {
+	connection = connection.split(/\?/)[0];
+
+    var sequelize = new Sequelize(connection, {logging: false});
+
+	var Contact = sequelize.define('Contact', {
+	  firstName: Sequelize.STRING,
+	  lastName: Sequelize.STRING
+	});
+	sequelize.authenticate().complete(function(err) {
+	    if (err) {
+	      console.log('Unable to connect to the database.', err);
+	      return;
+	    } 
+
 		var app = express();
 
 		app.use(express.bodyParser());
 		app.use(express.static(__dirname + '/public'));
 
-		app.delete("/api/contacts", function(req, res) {
-		    contacts.remove({}, function(err) {
-		    	if (err) { console.log(err); res.send(500); return; }
-		    	res.send(200);
-		    });
-		});
+	    createContactsController(app, "/api/contacts", Contact);
 
-		app.get("/api/contacts", function(req, res) {
-		    contacts.find().toArray(function(err, results) {
-		    	if (err) { console.log(err); res.send(500); return; }
-		    	res.send(results);
-		    });
-		});
-
-		app.post("/api/contacts", function(req,res) {
-		    contacts.insert(req.body, function(err, docs) {
-		    	if (err) { console.log(err); res.send(500); return; }
-				res.send(201);
-		    });
-		});
 		callback(app);
 	});
 };

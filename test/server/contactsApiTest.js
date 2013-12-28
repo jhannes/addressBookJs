@@ -2,12 +2,14 @@ var request = require('supertest');
 var _ = require("underscore");
 require("chai").should();
 
-
 var app;
 
 describe('GET /contacts', function(){
   before(function(done) {
-    require("../../app.js").start('mongodb://127.0.0.1:27017/test', function(_app) {
+    // var connection = 'mongodb://127.0.0.1:27017/test'
+    var connection = "mysql://monty:some_pass@localhost:3306/addressbook?reconnect=true";
+
+    require("../../app.js").start(connection, function(_app) {
       app = _app;
       done();
     });
