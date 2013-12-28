@@ -1,19 +1,33 @@
-var app = require("../../app.js").app;
 var request = require('supertest');
 var _ = require("underscore");
 require("chai").should();
 
+
+var app;
+
 describe('GET /contacts', function(){
+  before(function(done) {
+    require("../../app.js").start('mongodb://127.0.0.1:27017/test', function(_app) {
+      app = _app;
+      done();
+    });
+  });
+
   it('respond with json', function(done){
     request(app)
-      .get('/api/contacts')
-      .set('Accept', 'application/json')
-      .expect('Content-Type', /json/)
+      .del('/api/contacts')
       .expect(200)
-      .end(function(err, res) {
-        JSON.parse(res.text).should.have.length(2);
-      	done();
-      });
+      .end(function(err, res) { 
+        request(app)
+          .get('/api/contacts')
+          .set('Accept', 'application/json')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res) {
+            JSON.parse(res.text).should.have.length(0);
+          	done();
+          });
+        });
   });
 
   it("returns saved contacts", function(done) {
