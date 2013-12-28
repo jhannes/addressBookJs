@@ -44,18 +44,20 @@ exports.start = function(connection, callback) {
 	  lastName: Sequelize.STRING
 	});
 	sequelize.authenticate().complete(function(err) {
-	    if (err) {
-	      console.log('Unable to connect to the database.', err);
-	      return;
-	    } 
 
-		var app = express();
+	    sequelize.sync().complete(function(err) {
+		    if (err) {
+		      console.log('Unable to sync to model.', err);
+		      return;
+		    }
+			var app = express();
 
-		app.use(express.bodyParser());
-		app.use(express.static(__dirname + '/public'));
+			app.use(express.bodyParser());
+			app.use(express.static(__dirname + '/public'));
 
-	    createContactsController(app, "/api/contacts", Contact);
+		    createContactsController(app, "/api/contacts", Contact);
 
-		callback(app);
+			callback(app);	    	
+	    });
 	});
 };
